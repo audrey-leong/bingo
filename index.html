@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 2026 Goals Bingo</title>
+  <title>5 for 2026</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -96,7 +96,7 @@
       
       typography: {
         mainTitle: {
-          fontFamily: 'Lora, sans-serif',  // Font for the main page title
+          fontFamily: 'Copperplate, sans-serif',  // Font for the main page title
           fontWeight: 'regular',                     // Font weight
           color: '#2401FA',                       // Same as primary color
           fontSize: {
@@ -366,31 +366,7 @@
         });
       };
 
-      const renderMediaEmbed = (url) => {
-        if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-          return (
-            <img 
-              key={url}
-              src={url} 
-              alt="Embedded media" 
-              className="w-full object-cover rounded-lg shadow-lg my-4" 
-              style={{ maxHeight: '400px' }}
-            />
-          );
-        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-          const embedUrl = url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/').split('&')[0];
-          return (
-            <div key={url} className="aspect-video rounded-lg overflow-hidden shadow-lg my-4">
-              <iframe
-                src={embedUrl}
-                className="w-full h-full"
-                allowFullScreen
-              />
-            </div>
-          );
-        }
-        return null;
-      };
+      
 
       return (
         <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: THEME.colors.background }}>
@@ -409,7 +385,7 @@
                 fontSize: THEME.typography.mainTitle.fontSize.mobile,
               }}
             >
-              My 2026 Goals
+              OFFICIALLY 2026 BINGO
             </h1>
 
             <div 
