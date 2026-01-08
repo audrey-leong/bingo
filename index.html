@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My 2026 Goals Bingo</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ============================================
+    // THEME CONFIGURATION - Edit colors and styles here
+    // ============================================
+    const THEME = {
+      colors: {
+        primary: '#2401FA',        // Main brand color (title)
+        background: '#ffffff',     // Page background
+        cardBackground: '#FFFBF0', // Modal/detail background
+        
+        // Status colors
+        notStarted: {
+          bg: '#ffffff',
+          border: '#2401FA',  // gray-300
+        },
+        inProgress: {
+          bg: '#BEFA00',      // Base yellow color
+          border: '#BEFA00',  // yellow-400
+          backgroundImage: 'repeating-linear-gradient(45deg, #BEFA00 0px, #BEFA00 2px, #ffffff 1px, #ffffff 5px)', // Diagonal stripes
+        },
+        completed: {
+          bg: '#BEFA00',      // green-100
+          border: '#BEFA00',  // green-400
+        },
+        
+        // Status indicator bar
+        statusBar: {
+          notStarted: '#2401FA',  // gray-400
+          inProgress: '#FAD900',  // yellow-500
+          completed: '#BEFA00',   // green-500
+        },
+        
+        // UI elements
+        titleHover: '#2563eb',  // blue-600
+        titleDefault: '#1E3A8A', // blue-900
+        overlayBg: 'rgba(0, 0, 0, 0.5)',
+      },
+      
+      spacing: {
+        gridContainer: {
+          maxWidth: '47rem',        // max-w-2xl (640px) - smaller than default max-w-4xl (768px)
+        },
+        gridGap: {
+          mobile: '0.25rem',    // 1 (gap-1)
+          tablet: '0.5rem',     // 2 (gap-2)
+          desktop: '0.75rem',   // 3 (gap-3)
+          large: '1rem',        // 4 (gap-4)
+        },
+        cardPadding: {
+          mobile: '0.25rem',    // p-1
+          tablet: '0.5rem',     // p-2
+          desktop: '0.75rem',   // p-3
+        },
+        modalPadding: {
+          small: '1rem',        // p-4
+          medium: '1.5rem',     // p-6
+          large: '2rem',        // p-8
+        },
+      },
+      
+      borders: {
+        gridCard: {
+          mobile: '2px',
+          tablet: '3px',
+          desktop: '4px',
+        },
+        modalTop: '4px',
+        statusButton: '2px',
+      },
+      
+      borderRadius: {
+        card: {
+          mobile: '0rem',   // rounded-md
+          tablet: '0rem',     // rounded-lg
+        },
+        modal: '0.75rem',       // rounded-xl
+        statusBar: '9999px',    // rounded-full
+        button: '9999px',       // rounded-full
+      },
+      
+      typography: {
+        mainTitle: {
+          fontFamily: 'Lora, sans-serif',  // Font for the main page title
+          fontWeight: 'regular',                     // Font weight
+          color: '#2401FA',                       // Same as primary color
+          fontSize: {
+            mobile: '1.875rem',                   // text-3xl
+            tablet: '2.25rem',                    // text-4xl (sm:)
+            desktop: '3rem',                      // text-5xl (md:)
+            large: '3.75rem',                     // text-6xl (lg:)
+          },
+          textAlign: 'center',
+          marginBottom: {
+            mobile: '2rem',                       // mb-8
+            tablet: '3rem',                       // mb-12 (sm:)
+          },
+        },
+        title: {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: 'clamp(0.45rem, 1.8vw, 0.85rem)',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          letterSpacing: '0.3px',
+        },
+        heading: {
+          fontFamily: 'Blur, sans-serif',
+          fontWeight: 'bold',
+        },
+        notes: {
+          fontFamily: 'Georgia, serif',
+          fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+          lineHeight: '1.8',
+        },
+        label: {
+          fontFamily: 'Arial, sans-serif',
+        },
+      },
+      
+      effects: {
+        cardHover: {
+          scale: '1.05',
+          // shadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // shadow-2xl
+        },
+      },
+      
+      // Pop-up Notes Cards (Modal) Styling
+      modal: {
+        overlay: {
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          zIndex: '50',
+        },
+        container: {
+          backgroundColor: '#FFFFFF',   // Same as cardBackground
+          borderRadius: '0rem',      // rounded-xl
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          maxWidth: '48rem',            // max-w-3xl (768px)
+          maxHeight: '100vh',            // Maximum height as 80% of viewport height
+          height: 'auto',               // Auto height to expand with content
+        },
+        header: {
+          backgroundColor: '#FFFFFF',   // Same as cardBackground
+          borderBottomWidth: '1px',
+          borderBottomColor: '#d1d5db', // gray-300
+          borderBottomStyle: 'solid',
+          padding: {
+            mobile: '1rem',             // p-4
+            desktop: '1.5rem',          // p-6
+          },
+          statusBar: {
+            width: {
+              mobile: '0.25rem',        // w-1
+              desktop: '0.5rem',        // w-2
+            },
+            height: {
+              mobile: '3rem',           // h-12
+              desktop: '4rem',          // h-16
+            },
+            marginRight: {
+              mobile: '0.75rem',        // mr-3
+              desktop: '1rem',          // mr-4
+            },
+            borderRadius: '9999px',     // rounded-full
+          },
+          title: {
+            fontFamily: 'Impact, sans-serif',
+            fontSize: {
+              mobile: '1.25rem',        // text-xl
+              tablet: '1.5rem',         // text-2xl
+              desktop: '1.875rem',      // text-3xl
+            },
+            fontWeight: 'bold',
+            color: '#1E3A8A',           // blue-900 (titleDefault)
+            colorHover: '#2563eb',      // blue-600 (titleHover)
+          },
+          closeButton: {
+            padding: '0.5rem',          // p-2
+            marginLeft: {
+              mobile: '0.5rem',         // ml-2
+              desktop: '1rem',          // ml-4
+            },
+            borderRadius: '9999px',     // rounded-full
+            backgroundColor: 'transparent',
+            backgroundColorHover: '#e5e7eb', // hover:bg-gray-200
+          },
+        },
+        content: {
+          spacing: '1rem 1.5rem',       // space-y-4 sm:space-y-6 with padding
+          padding: {
+            mobile: '1rem',             // p-4
+            desktop: '1rem',            // Keep same for content
+          },
+        },
+        textarea: {
+          fontFamily: 'Georgia, serif',
+          fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+          lineHeight: '1.8',
+          backgroundColor: 'transparent',
+          border: 'none',
+          outline: 'none',
+          padding: {
+            mobile: '0.75rem',          // p-3
+            desktop: '1rem',            // p-4
+          },
+          minHeight: {
+            mobile: '42rem',            // min-h-[832px] - taller than width (768px)
+            desktop: '48rem',           // min-h-[896px] - even taller for desktop
+          },
+          placeholder: {
+            color: '#6b7280',           // text-gray-500
+          },
+        },
+      },
+    };
+
+    // Lucide icons as inline SVGs
+    const X = ({ size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    );
+
+    const GoalsBingo2026 = () => {
+      // Load goals from localStorage or use default
+      const getInitialGoals = () => {
+        const savedGoals = localStorage.getItem('goals-bingo-2026');
+        if (savedGoals) {
+          return JSON.parse(savedGoals);
+        }
+        return [
+          { id: 1, text: 'Run a marathon', status: 'not-started', notes: '', media: '' },
+          { id: 2, text: 'Learn to cook 10 new recipes', status: 'not-started', notes: '', media: '' },
+          { id: 3, text: 'Read 24 books', status: 'not-started', notes: '', media: '' },
+          { id: 4, text: 'Visit 3 new countries', status: 'not-started', notes: '', media: '' },
+          { id: 5, text: 'Launch side project', status: 'not-started', notes: '', media: '' },
+          { id: 6, text: 'Meditate 100 days', status: 'not-started', notes: '', media: '' },
+          { id: 7, text: 'Learn to play guitar', status: 'not-started', notes: '', media: '' },
+          { id: 8, text: 'Volunteer monthly', status: 'not-started', notes: '', media: '' },
+          { id: 9, text: 'Write 50 journal entries', status: 'not-started', notes: '', media: '' },
+          { id: 10, text: 'Take a pottery class', status: 'not-started', notes: '', media: '' },
+          { id: 11, text: 'Organize home office', status: 'not-started', notes: '', media: '' },
+          { id: 12, text: 'Start a garden', status: 'not-started', notes: '', media: '' },
+          { id: 13, text: 'Learn basic coding', status: 'not-started', notes: '', media: '' },
+          { id: 14, text: 'Attend 5 concerts', status: 'not-started', notes: '', media: '' },
+          { id: 15, text: 'Create photo album', status: 'not-started', notes: '', media: '' },
+          { id: 16, text: 'Master a new language', status: 'not-started', notes: '', media: '' },
+          { id: 17, text: 'Go camping 4 times', status: 'not-started', notes: '', media: '' },
+          { id: 18, text: 'Try 12 new restaurants', status: 'not-started', notes: '', media: '' },
+          { id: 19, text: 'Complete online course', status: 'not-started', notes: '', media: '' },
+          { id: 20, text: 'Paint a mural', status: 'not-started', notes: '', media: '' },
+          { id: 21, text: 'Build a piece of furniture', status: 'not-started', notes: '', media: '' },
+          { id: 22, text: 'Practice yoga weekly', status: 'not-started', notes: '', media: '' },
+          { id: 23, text: 'Host dinner parties', status: 'not-started', notes: '', media: '' },
+          { id: 24, text: 'Write thank you notes', status: 'not-started', notes: '', media: '' },
+          { id: 25, text: 'Create vision board', status: 'not-started', notes: '', media: '' }
+        ];
+      };
+
+      const [goals, setGoals] = useState(getInitialGoals());
+
+      const [selectedGoal, setSelectedGoal] = useState(null);
+      const [isTitleEditing, setIsTitleEditing] = useState(false);
+
+      // Save goals to localStorage whenever goals change
+      React.useEffect(() => {
+        localStorage.setItem('goals-bingo-2026', JSON.stringify(goals));
+      }, [goals]);
+
+      const saveGoalDetails = () => {
+        if (!selectedGoal) return;
+        setGoals(goals.map(g => g.id === selectedGoal.id ? selectedGoal : g));
+      };
+
+      // Handle Escape key to close popup
+      React.useEffect(() => {
+        const handleKeyDown = (event) => {
+          if (event.key === 'Escape' && selectedGoal) {
+            saveGoalDetails();
+            setSelectedGoal(null);
+          }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+          document.removeEventListener('keydown', handleKeyDown);
+        };
+      }, [selectedGoal, goals]);
+
+      const getStatusColors = (status) => {
+        switch(status) {
+          case 'completed': 
+            return {
+              bg: THEME.colors.completed.bg,
+              border: THEME.colors.completed.border,
+            };
+          case 'in-progress': 
+            return {
+              bg: THEME.colors.inProgress.bg,
+              border: THEME.colors.inProgress.border,
+              backgroundImage: THEME.colors.inProgress.backgroundImage,
+            };
+          default: 
+            return {
+              bg: THEME.colors.notStarted.bg,
+              border: THEME.colors.notStarted.border,
+            };
+        }
+      };
+
+      const getStatusBarColor = (status) => {
+        switch(status) {
+          case 'completed': return THEME.colors.statusBar.completed;
+          case 'in-progress': return THEME.colors.statusBar.inProgress;
+          default: return THEME.colors.statusBar.notStarted;
+        }
+      };
+
+      const cycleStatus = (goalId, e) => {
+        e.stopPropagation();
+        setGoals(goals.map(g => {
+          if (g.id === goalId) {
+            const statuses = ['not-started', 'in-progress', 'completed'];
+            const currentIndex = statuses.indexOf(g.status);
+            const nextIndex = (currentIndex + 1) % statuses.length;
+            return { ...g, status: statuses[nextIndex] };
+          }
+          return g;
+        }));
+      };
+
+      const openGoalDetail = (goal) => {
+        setSelectedGoal(goal);
+        setIsTitleEditing(false);
+      };
+
+      const updateGoalTitle = (newTitle) => {
+        const updated = { ...selectedGoal, text: newTitle };
+        setSelectedGoal(updated);
+        setGoals(goals.map(g => g.id === selectedGoal.id ? updated : g));
+      };
+
+      const extractMediaFromNotes = (notes) => {
+        if (!notes) return [];
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urls = notes.match(urlRegex) || [];
+        return urls.filter(url => {
+          return url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || 
+                 url.includes('youtube.com') || 
+                 url.includes('youtu.be');
+        });
+      };
+
+      const renderMediaEmbed = (url) => {
+        if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          return (
+            <img 
+              key={url}
+              src={url} 
+              alt="Embedded media" 
+              className="w-full object-cover rounded-lg shadow-lg my-4" 
+              style={{ maxHeight: '400px' }}
+            />
+          );
+        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          const embedUrl = url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/').split('&')[0];
+          return (
+            <div key={url} className="aspect-video rounded-lg overflow-hidden shadow-lg my-4">
+              <iframe
+                src={embedUrl}
+                className="w-full h-full"
+                allowFullScreen
+              />
+            </div>
+          );
+        }
+        return null;
+      };
+
+      return (
+        <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: THEME.colors.background }}>
+          <div 
+            className="relative z-10 w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"
+            style={{ maxWidth: THEME.spacing.gridContainer.maxWidth }}
+          >
+            <h1 
+              className="responsive-title" 
+              style={{ 
+                fontFamily: THEME.typography.mainTitle.fontFamily,
+                fontWeight: THEME.typography.mainTitle.fontWeight,
+                color: THEME.typography.mainTitle.color,
+                textAlign: THEME.typography.mainTitle.textAlign,
+                marginBottom: THEME.typography.mainTitle.marginBottom.mobile,
+                fontSize: THEME.typography.mainTitle.fontSize.mobile,
+              }}
+            >
+              My 2026 Goals
+            </h1>
+
+            <div 
+              className="grid grid-cols-5 mb-6 sm:mb-8"
+              style={{
+                gap: `${THEME.spacing.gridGap.mobile}`,
+              }}
+            >
+              {goals.map((goal) => {
+                const statusColors = getStatusColors(goal.status);
+                return (
+                  <div
+                    key={goal.id}
+                    onClick={() => openGoalDetail(goal)}
+                    className="aspect-square rounded-md sm:rounded-lg cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center justify-center text-center relative"
+                    style={{
+                      backgroundColor: statusColors.bg,
+                      backgroundImage: statusColors.backgroundImage || 'none',
+                      borderWidth: THEME.borders.gridCard.mobile,
+                      borderColor: statusColors.border,
+                      borderStyle: 'solid',
+                      borderRadius: THEME.borderRadius.card.mobile,
+                      padding: THEME.spacing.cardPadding.mobile,
+                      fontFamily: THEME.typography.title.fontFamily,
+                      fontSize: THEME.typography.title.fontSize,
+                      fontWeight: THEME.typography.title.fontWeight,
+                      textTransform: THEME.typography.title.textTransform,
+                      letterSpacing: THEME.typography.title.letterSpacing,
+                    }}
+                  >
+                    <div className="flex-1 flex items-center justify-center px-0.5 overflow-hidden">
+                      <span className="line-clamp-4">{goal.text}</span>
+                    </div>
+                    <button
+                      onClick={(e) => cycleStatus(goal.id, e)}
+                      className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-xs font-bold bg-white hover:bg-gray-100"
+                      style={{ 
+                        fontSize: 'clamp(8px, 1.5vw, 10px)',
+                        borderRadius: THEME.borderRadius.button,
+                        borderWidth: THEME.borders.statusButton,
+                        borderColor: '#9ca3af',
+                        borderStyle: 'solid',
+                      }}
+                    >
+                      {goal.status === 'completed' ? '✓' : goal.status === 'in-progress' ? '→' : '○'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div 
+              className="flex flex-wrap justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium" 
+              style={{ fontFamily: THEME.typography.label.fontFamily }}
+            >
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 sm:w-4 sm:h-4"
+                  style={{
+                    borderRadius: THEME.borderRadius.statusBar,
+                    borderWidth: THEME.borders.statusButton,
+                    borderColor: THEME.colors.notStarted.border,
+                    borderStyle: 'solid',
+                    backgroundColor: THEME.colors.notStarted.bg,
+                  }}
+                />
+                <span>Not Started</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 sm:w-4 sm:h-4"
+                  style={{
+                    borderRadius: THEME.borderRadius.statusBar,
+                    borderWidth: THEME.borders.statusButton,
+                    borderColor: THEME.colors.inProgress.border,
+                    borderStyle: 'solid',
+                    backgroundColor: 'transparent',
+                  }}
+                />
+                <span>In Progress</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 sm:w-4 sm:h-4"
+                  style={{
+                    borderRadius: THEME.borderRadius.statusBar,
+                    borderWidth: THEME.borders.statusButton,
+                    borderColor: THEME.colors.completed.border,
+                    borderStyle: 'solid',
+                    backgroundColor: THEME.colors.completed.bg,
+                  }}
+                />
+                <span>Completed</span>
+              </div>
+            </div>
+          </div>
+
+          {selectedGoal && (
+            <div 
+              className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto"
+              style={{ 
+                backgroundColor: THEME.modal.overlay.backgroundColor,
+                zIndex: THEME.modal.overlay.zIndex,
+              }}
+            >
+              <div 
+                className="w-full my-8 overflow-hidden" 
+                style={{ 
+                  backgroundColor: THEME.modal.container.backgroundColor,
+                  borderRadius: THEME.modal.container.borderRadius,
+                  boxShadow: THEME.modal.container.boxShadow,
+                  maxWidth: THEME.modal.container.maxWidth,
+                  maxHeight: THEME.modal.container.maxHeight,
+                  height: THEME.modal.container.height,
+                }}
+              >
+                <div 
+                  className="sticky top-0 flex items-center" 
+                  style={{ 
+                    backgroundColor: THEME.modal.header.backgroundColor,
+                    borderBottomWidth: THEME.modal.header.borderBottomWidth,
+                    borderBottomColor: THEME.modal.header.borderBottomColor,
+                    borderBottomStyle: THEME.modal.header.borderBottomStyle,
+                    padding: `${THEME.modal.header.padding.mobile}`,
+                  }}
+                >
+                  <div 
+                    className="flex-shrink-0"
+                    style={{ 
+                      width: THEME.modal.header.statusBar.width.mobile,
+                      height: THEME.modal.header.statusBar.height.mobile,
+                      marginRight: THEME.modal.header.statusBar.marginRight.mobile,
+                      backgroundColor: getStatusBarColor(selectedGoal.status),
+                      borderRadius: THEME.modal.header.statusBar.borderRadius,
+                    }}
+                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <h2 
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => updateGoalTitle(e.currentTarget.textContent)}
+                      onClick={() => setIsTitleEditing(true)}
+                      className="cursor-text transition-colors outline-none break-words" 
+                      style={{ 
+                        fontFamily: THEME.modal.header.title.fontFamily,
+                        fontSize: THEME.modal.header.title.fontSize.mobile,
+                        fontWeight: THEME.modal.header.title.fontWeight,
+                        color: THEME.modal.header.title.color,
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = THEME.modal.header.title.colorHover}
+                      onMouseLeave={(e) => e.currentTarget.style.color = THEME.modal.header.title.color}
+                    >
+                      {selectedGoal.text}
+                    </h2>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      saveGoalDetails();
+                      setSelectedGoal(null);
+                    }}
+                    className="flex-shrink-0 transition-colors"
+                    style={{ 
+                      padding: THEME.modal.header.closeButton.padding,
+                      marginLeft: THEME.modal.header.closeButton.marginLeft.mobile,
+                      borderRadius: THEME.modal.header.closeButton.borderRadius,
+                      backgroundColor: THEME.modal.header.closeButton.backgroundColor,
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.modal.header.closeButton.backgroundColorHover}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = THEME.modal.header.closeButton.backgroundColor}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div 
+                  className="space-y-4 sm:space-y-6"
+                  style={{
+                    padding: THEME.modal.content.padding.mobile,
+                  }}
+                >
+                  {extractMediaFromNotes(selectedGoal.notes).map(url => renderMediaEmbed(url))}
+
+                  <textarea
+                    value={selectedGoal.notes}
+                    onChange={(e) => {
+                      const updatedGoal = { ...selectedGoal, notes: e.target.value };
+                      setSelectedGoal(updatedGoal);
+                      setGoals(goals.map(g => g.id === selectedGoal.id ? updatedGoal : g));
+                    }}
+                    placeholder="Write about your progress and paste image URLs or YouTube links anywhere in your notes - they'll automatically embed above!
+
+Example:
+Today I made great progress on this goal...
+
+https://www.youtube.com/watch?v=example
+https://example.com/photo.jpg
+
+The images and videos will show up automatically!"
+                    className="w-full resize-none"
+                    style={{ 
+                      fontFamily: THEME.modal.textarea.fontFamily,
+                      fontSize: THEME.modal.textarea.fontSize,
+                      lineHeight: THEME.modal.textarea.lineHeight,
+                      backgroundColor: THEME.modal.textarea.backgroundColor,
+                      border: THEME.modal.textarea.border,
+                      outline: THEME.modal.textarea.outline,
+                      padding: THEME.modal.textarea.padding.mobile,
+                      minHeight: THEME.modal.textarea.minHeight.mobile,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<GoalsBingo2026 />);
+  </script>
+</body>
+</html>
