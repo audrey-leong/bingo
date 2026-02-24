@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>5 for 2026</title>
+  <title>25 for 2026</title>
 
   <!-- Add Google Fonts here -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +14,38 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @property --x {
+      syntax: '<length-percentage>';
+      initial-value: 50vw;
+      inherits: false;
+    }
+
+    @property --y {
+      syntax: '<length-percentage>';
+      initial-value: 50vh;
+      inherits: false;
+    }
+
+    .halftone-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      --pattern: radial-gradient(closest-side, #2401FA, #fff) 0/ 1em 1em space;
+      --map: radial-gradient(circle farthest-corner at var(--x) var(--y), #2401FA, #fff);
+      background: var(--pattern), var(--map);
+      background-blend-mode: multiply;
+      filter: contrast(16);
+      transition: .35s cubic-bezier(.1,0,.5,1.5);
+      transition-property: --x, --y;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -541,7 +573,10 @@
       };
 
       return (
-        <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: THEME.colors.background }}>
+        <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'transparent' }}>
+          {/* Halftone background effect */}
+          <div className="halftone-background"></div>
+          
           <div 
             className="relative z-10 w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"
             style={{ maxWidth: THEME.spacing.gridContainer.maxWidth }}
@@ -771,6 +806,17 @@
     };
 
     ReactDOM.createRoot(document.getElementById('root')).render(<GoalsBingo2026 />);
+  </script>
+
+  <script>
+    // Mouse tracking for halftone background effect
+    document.addEventListener('mousemove', e => {
+      const halftone = document.querySelector('.halftone-background');
+      if (halftone) {
+        halftone.style.setProperty('--x', e.clientX + 'px');
+        halftone.style.setProperty('--y', e.clientY + 'px');
+      }
+    });
   </script>
 </body>
 </html>
