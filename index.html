@@ -35,8 +35,8 @@
       width: 100%;
       height: 100%;
       z-index: -1;
-      --pattern: radial-gradient(closest-side, #2401FA, #fff) 0/ 1em 1em space;
-      --map: radial-gradient(circle farthest-corner at var(--x) var(--y), #2401FA, #fff);
+      --pattern: radial-gradient(closest-side, #ff7ddc, #fff) 0/ 0.5em 0.5em space;
+      --map: radial-gradient(circle farthest-corner at var(--x) var(--y), #888, #fff);
       background: var(--pattern), var(--map);
       background-blend-mode: multiply;
       filter: contrast(16);
@@ -590,6 +590,12 @@
                 textAlign: THEME.typography.mainTitle.textAlign,
                 marginBottom: THEME.typography.mainTitle.marginBottom.mobile,
                 fontSize: THEME.typography.mainTitle.fontSize.mobile,
+                position: 'relative',
+                zIndex: 20,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                backdropFilter: 'blur(10px)',
               }}
             >
               OFFICIALLY 2026 BINGO
@@ -646,7 +652,16 @@
 
             <div 
               className="flex flex-wrap justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium" 
-              style={{ fontFamily: THEME.typography.label.fontFamily }}
+              style={{ 
+                fontFamily: THEME.typography.label.fontFamily,
+                position: 'relative',
+                zIndex: 20,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                backdropFilter: 'blur(10px)',
+                marginTop: '1rem',
+              }}
             >
               <div className="flex items-center gap-2">
                 <div 
