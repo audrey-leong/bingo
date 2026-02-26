@@ -288,41 +288,10 @@
     );
 
     const GoalsBingo2026 = () => {
-      // Load goals from Gist or use default
-      const getDefaultGoals = () => {
-        return [
-          { id: 1, text: 'Run a marathon', status: 'not-started', notes: '', media: '' },
-          { id: 2, text: 'Learn to cook 10 new recipes', status: 'not-started', notes: '', media: '' },
-          { id: 3, text: 'Read 24 books', status: 'not-started', notes: '', media: '' },
-          { id: 4, text: 'Visit 3 new countries', status: 'not-started', notes: '', media: '' },
-          { id: 5, text: 'Launch side project', status: 'not-started', notes: '', media: '' },
-          { id: 6, text: 'Meditate 100 days', status: 'not-started', notes: '', media: '' },
-          { id: 7, text: 'Learn to play guitar', status: 'not-started', notes: '', media: '' },
-          { id: 8, text: 'Volunteer monthly', status: 'not-started', notes: '', media: '' },
-          { id: 9, text: 'Write 50 journal entries', status: 'not-started', notes: '', media: '' },
-          { id: 10, text: 'Take a pottery class', status: 'not-started', notes: '', media: '' },
-          { id: 11, text: 'Organize home office', status: 'not-started', notes: '', media: '' },
-          { id: 12, text: 'Start a garden', status: 'not-started', notes: '', media: '' },
-          { id: 13, text: 'Learn basic coding', status: 'not-started', notes: '', media: '' },
-          { id: 14, text: 'Attend 5 concerts', status: 'not-started', notes: '', media: '' },
-          { id: 15, text: 'Create photo album', status: 'not-started', notes: '', media: '' },
-          { id: 16, text: 'Master a new language', status: 'not-started', notes: '', media: '' },
-          { id: 17, text: 'Go camping 4 times', status: 'not-started', notes: '', media: '' },
-          { id: 18, text: 'Try 12 new restaurants', status: 'not-started', notes: '', media: '' },
-          { id: 19, text: 'Complete online course', status: 'not-started', notes: '', media: '' },
-          { id: 20, text: 'Paint a mural', status: 'not-started', notes: '', media: '' },
-          { id: 21, text: 'Build a piece of furniture', status: 'not-started', notes: '', media: '' },
-          { id: 22, text: 'Practice yoga weekly', status: 'not-started', notes: '', media: '' },
-          { id: 23, text: 'Host dinner parties', status: 'not-started', notes: '', media: '' },
-          { id: 24, text: 'Write thank you notes', status: 'not-started', notes: '', media: '' },
-          { id: 25, text: 'Create vision board', status: 'not-started', notes: '', media: '' }
-        ];
-      };
-
-      const [goals, setGoals] = useState(getDefaultGoals());
+      const [goals, setGoals] = useState([]);
       const [selectedGoal, setSelectedGoal] = useState(null);
       const [isTitleEditing, setIsTitleEditing] = useState(false);
-      const [isLoading, setIsLoading] = useState(false);
+      const [isLoading, setIsLoading] = useState(true);
       const [isSaving, setIsSaving] = useState(false);
       const [lastSyncTime, setLastSyncTime] = useState(null);
       const [syncError, setSyncError] = useState(null);
@@ -548,7 +517,60 @@
                 gap: `${THEME.spacing.gridGap.mobile}`,
               }}
             >
-              {goals.map((goal) => {
+              {isLoading ? (
+                // Loading skeleton - show 25 placeholder cards with cute colors
+                Array.from({ length: 25 }, (_, index) => {
+                  // Cute pastel colors that rotate through the grid
+                  const cuteColors = [
+                    { bg: '#fdf2f8', border: '#f9a8d4', textBg: '#fbcfe8' }, // pink
+                    { bg: '#fef3f2', border: '#fca5a5', textBg: '#fecaca' }, // red/coral
+                    { bg: '#fffbeb', border: '#fbbf24', textBg: '#fde68a' }, // yellow
+                    { bg: '#f0fdf4', border: '#86efac', textBg: '#bbf7d0' }, // green
+                    { bg: '#eff6ff', border: '#93c5fd', textBg: '#bfdbfe' }, // blue
+                    { bg: '#f5f3ff', border: '#c4b5fd', textBg: '#ddd6fe' }, // purple
+                    { bg: '#fdf4ff', border: '#f0abfc', textBg: '#f5d0fe' }, // magenta
+                  ];
+                  const colorIndex = index % cuteColors.length;
+                  const colors = cuteColors[colorIndex];
+                  
+                  return (
+                    <div
+                      key={`skeleton-${index}`}
+                      className="aspect-square rounded-md sm:rounded-lg flex flex-col items-center justify-center text-center relative"
+                      style={{
+                        backgroundColor: colors.bg,
+                        borderWidth: THEME.borders.gridCard.mobile,
+                        borderColor: colors.border,
+                        borderStyle: 'solid',
+                        borderRadius: THEME.borderRadius.card.mobile,
+                        padding: THEME.spacing.cardPadding.mobile,
+                        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                      }}
+                    >
+                      <div className="flex-1 flex items-center justify-center px-0.5">
+                        <div 
+                          className="w-16 h-4 rounded-full"
+                          style={{ 
+                            backgroundColor: colors.textBg,
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            animationDelay: `${index * 0.1}s`
+                          }}
+                        ></div>
+                      </div>
+                      {/* Cute little loading dot */}
+                      <div 
+                        className="absolute bottom-1 right-1 w-3 h-3 rounded-full"
+                        style={{ 
+                          backgroundColor: colors.border,
+                          animation: 'bounce 1s infinite',
+                          animationDelay: `${index * 0.05}s`
+                        }}
+                      ></div>
+                    </div>
+                  );
+                })
+              ) : (
+                goals.map((goal) => {
                 const statusColors = getStatusColors(goal.status);
                 return (
                   <div
@@ -588,7 +610,8 @@
                     </button>
                   </div>
                 );
-              })}
+                })
+              )}
             </div>
 
             <div 
