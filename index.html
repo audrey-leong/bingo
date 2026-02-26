@@ -14,6 +14,18 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL = "https://fiskftcgyhsynboemyau.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpc2tmdGNneWhzeW5ib2VteWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzE2NTAsImV4cCI6MjA4NzY0NzY1MH0.ksYXNNrQI0hAbAyesE7lyPy_OgfrEd6oYVwnJayQzVU";
+
+    const supabaseClient = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+  </script>
 
   <style>
     @property --x {
@@ -36,7 +48,7 @@
       height: 100%;
       z-index: -1;
       --pattern: radial-gradient(closest-side, #ff7ddc, #fff) 0/ 0.5em 0.5em space;
-      --map: radial-gradient(circle 200px at var(--x) var(--y), #888, #fff);
+      --map: radial-gradient(circle 260px at var(--x) var(--y), #888, #fff);
       background: var(--pattern), var(--map);
       background-blend-mode: multiply;
       filter: contrast(16);
@@ -53,15 +65,7 @@
   <script type="text/babel">
     const { useState } = React;
 
-    // ============================================
-    // GITHUB GIST CONFIGURATION
-    // ============================================
-    const GIST_CONFIG = {
-      gistId: 'YOUR_GIST_ID_HERE',  // Replace with your Gist ID
-      filename: 'bingo-data.json',
-      token: 'YOUR_GITHUB_TOKEN_HERE',  // Replace with your Personal Access Token
-    };
-
+  
     // ============================================
     // THEME CONFIGURATION - Edit colors and styles here
     // ============================================
@@ -324,131 +328,66 @@
       const [syncError, setSyncError] = useState(null);
       const hasLoadedRef = React.useRef(false);
 
-      // TEMPORARILY DISABLED - Load data from Gist on mount
-      // React.useEffect(() => {
-      //   if (!hasLoadedRef.current && GIST_CONFIG.gistId !== 'YOUR_GIST_ID_HERE') {
-      //     hasLoadedRef.current = true;
-      //     loadFromGist();
-      //   }
-      // }, []);
+    React.useEffect(() => {
+      loadFromSupabase();
+    }, []);
 
-      const loadFromGist = async () => {
-        if (!GIST_CONFIG.gistId || GIST_CONFIG.gistId === 'YOUR_GIST_ID_HERE') {
-          console.log('Gist not configured, using defaults');
-          setSyncError('Gist not configured');
-          return;
+    const loadFromSupabase = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data, error } = await supabaseClient
+          .from("goals")
+          .select("*")
+          .order("id");
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setGoals(data);
         }
 
-        try {
-          setIsLoading(true);
-          setSyncError(null);
-          
-          const response = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
-            headers: {
-              'Authorization': `token ${GIST_CONFIG.token}`,
-              'Accept': 'application/vnd.github.v3+json',
-            },
-          });
+      } catch (err) {
+        console.error("Supabase load error:", err);
+        setSyncError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
 
-          const gist = await response.json();
-          const fileContent = gist.files[GIST_CONFIG.filename]?.content;
+    const saveGoalToSupabase = async (goal) => {
+      try {
+        const { error } = await supabaseClient
+          .from("goals")
+          .update({
+            text: goal.text,
+            status: goal.status,
+            notes: goal.notes,
+            media: goal.media,
+          })
+          .eq("id", goal.id);
 
-          if (fileContent) {
-            const data = JSON.parse(fileContent);
-            setGoals(data);
-            setLastSyncTime(new Date());
-            console.log('✅ Loaded from Gist successfully');
-          } else {
-            console.log('📝 File not found in Gist, creating it...');
-            const defaults = getDefaultGoals();
-            setGoals(defaults);
-            await saveToGist(defaults);
-          }
-        } catch (error) {
-          console.error('❌ Error loading from Gist:', error);
-          setSyncError(error.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
+        if (error) throw error;
 
-      const saveToGist = async (goalsToSave) => {
-        if (!GIST_CONFIG.gistId || GIST_CONFIG.gistId === 'YOUR_GIST_ID_HERE') {
-          console.log('Gist not configured, skipping save');
-          return;
-        }
-
-        try {
-          setIsSaving(true);
-          setSyncError(null);
-
-          const response = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `token ${GIST_CONFIG.token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              files: {
-                [GIST_CONFIG.filename]: {
-                  content: JSON.stringify(goalsToSave, null, 2),
-                },
-              },
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          setLastSyncTime(new Date());
-          console.log('✅ Saved to Gist successfully');
-        } catch (error) {
-          console.error('❌ Error saving to Gist:', error);
-          setSyncError(error.message);
-        } finally {
-          setIsSaving(false);
-        }
-      };
-
-      // Debounced save to Gist
-      const saveTimeoutRef = React.useRef(null);
-      const isFirstLoad = React.useRef(true);
+      } catch (err) {
+        console.error("Supabase save error:", err);
+        setSyncError(err.message);
+      }
+    };
       
-      React.useEffect(() => {
-        // Skip saving on first load
-        if (isFirstLoad.current) {
-          isFirstLoad.current = false;
-          return;
-        }
-        
-        if (isLoading) return; // Don't save during initial load
-        
-        // Clear existing timeout
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
-        }
-
-        // Set new timeout to save after 2 seconds of inactivity
-        saveTimeoutRef.current = setTimeout(() => {
-          saveToGist(goals);
-        }, 2000);
-
-        return () => {
-          if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-          }
-        };
-      }, [goals]);
+      
+  
 
       const saveGoalDetails = () => {
         if (!selectedGoal) return;
-        setGoals(goals.map(g => g.id === selectedGoal.id ? selectedGoal : g));
+
+        const updatedGoals = goals.map(g =>
+          g.id === selectedGoal.id ? selectedGoal : g
+        );
+
+        setGoals(updatedGoals);
+        saveGoalToSupabase(selectedGoal);
       };
 
       // Handle Escape key to close popup
@@ -497,7 +436,8 @@
 
       const cycleStatus = (goalId, e) => {
         e.stopPropagation();
-        setGoals(goals.map(g => {
+
+        const updated = goals.map(g => {
           if (g.id === goalId) {
             const statuses = ['not-started', 'in-progress', 'completed'];
             const currentIndex = statuses.indexOf(g.status);
@@ -505,8 +445,14 @@
             return { ...g, status: statuses[nextIndex] };
           }
           return g;
-        }));
+        });
+
+        setGoals(updated);
+
+        const changedGoal = updated.find(g => g.id === goalId);
+        saveGoalToSupabase(changedGoal);
       };
+
 
       const openGoalDetail = (goal) => {
         setSelectedGoal(goal);
@@ -517,6 +463,7 @@
         const updated = { ...selectedGoal, text: newTitle };
         setSelectedGoal(updated);
         setGoals(goals.map(g => g.id === selectedGoal.id ? updated : g));
+        saveGoalToSupabase(updated);
       };
 
       const extractMediaFromNotes = (notes) => {
@@ -783,6 +730,7 @@
                       const updatedGoal = { ...selectedGoal, notes: e.target.value };
                       setSelectedGoal(updatedGoal);
                       setGoals(goals.map(g => g.id === selectedGoal.id ? updatedGoal : g));
+                      saveGoalToSupabase(updatedGoal);
                     }}
                     placeholder="Good day to start."
                     className="w-full resize-none"
